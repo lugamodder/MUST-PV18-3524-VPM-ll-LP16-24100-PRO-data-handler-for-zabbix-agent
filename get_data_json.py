@@ -74,7 +74,7 @@ register_map = {
     25265: ["InverterWarningMessage", "InverterWarningMessage", 1, ""],
     25273: ["batteryPower", "Battery power", 1, "W"],
     25274: ["batteryCurrent", "Battery current", 1, "A"],
-#    25279: ["ArrowFlag", "Arrow Flag", 1, ""],
+    25279: ["ArrowFlag", "Arrow Flag", 1, ""],
 #    20109: [
 #        "EnergyUseMode", "Energy use mode", 1, "map",
 #        {0: "-", 1: "SBU", 2: "SUB", 3: "UTI", 4: "SOL"},
@@ -122,10 +122,13 @@ register_map = {
 #    15219: ["AccumulatedTimeDay", "Accumulated Time day", 1, "d"],
 }
 
-def to_signed(value):
-    if value >= 0x8000:
-        value -= 0x10000
+def to_signed16_safe(value):
+    """Корректное преобразование 16-битного Modbus значения в signed int."""
+    value = int(value)
+    if value >= 32768:
+        value -= 65536
     return value
+
 
 def read_register_values(i, startreg, count, functioncode=3):
     stats = {}
@@ -138,7 +141,7 @@ def read_register_values(i, startreg, count, functioncode=3):
 
             # если ток или мощность — интерпретируем как знаковое значение
             if any(word in r_key.lower() for word in ["current", "power"]):
-                r = to_signed(r)
+                r = to_signed16_safe(r)
 
             r_value = round(r * scale, 2)
 
@@ -166,12 +169,27 @@ def main():
         other = read_register_values(i, 15201, 125)
 
         all_stats = {**stats, **bms, **config, **other}
+        arrow = all_stats.get("ArrowFlag", 0)
+        if "batteryCurrent" in all_stats:
+           if arrow & (1 << 1):  # разряд
+              all_stats["batteryCurrent"] = -abs(all_stats["batteryCurrent"])
+           elif arrow & (1 << 0):  # заряд
+              all_stats["batteryCurrent"] = abs(all_stats["batteryCurrent"])
+        if "batteryCurrent" in all_stats:
+           val = all_stats["batteryCurrent"]
+        if val < 0:
+           all_stats["BatteryDischargeCurrent"] = abs(val)
+           all_stats["BatteryChargeCurrent"] = 0
+        else:
+           all_stats["BatteryDischargeCurrent"] = 0
+           all_stats["BatteryChargeCurrent"] = abs(val)
 
         # выводим JSON
         print(json.dumps(all_stats, ensure_ascii=False, indent=2))
 
     except Exception as e:
         print(json.dumps({"error": str(e)}, ensure_ascii=False))
+
 
 if __name__ == "__main__":
     main()
