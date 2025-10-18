@@ -183,6 +183,16 @@ def main():
         else:
            all_stats["BatteryDischargeCurrent"] = 0
            all_stats["BatteryChargeCurrent"] = abs(val)
+        # BMS ток батареи
+        if "BMS_Battery_Current" in all_stats:
+           val = all_stats["BMS_Battery_Current"]
+           if val < 0:
+               all_stats["BMS_BatteryDischargeCurrent"] = abs(val)
+               all_stats["BMS_BatteryChargeCurrent"] = 0
+           else:
+              all_stats["BMS_BatteryDischargeCurrent"] = 0
+              all_stats["BMS_BatteryChargeCurrent"] = abs(val)
+
 
         # выводим JSON
         print(json.dumps(all_stats, ensure_ascii=False, indent=2))
