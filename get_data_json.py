@@ -93,22 +93,22 @@ register_map = {
     20125: ["GridMaxChargerCurSet", "Grid max charger current set", 0.1, "A"],
     20127: ["BatLowVoltage", "Battery low voltage", 0.1, "V"],
     20128: ["BatHighVoltage", "Battery high voltage", 0.1, "V"],
-    15201: [
-        "ChargerWorkstate", "Charger Workstate", 1, "map",
-        {0: "Initialization", 1: "Selftest", 2: "Work", 3: "Stop"},
-    ],
+#    15201: [
+#       "ChargerWorkstate", "Charger Workstate", 1, "map",
+#        {0: "Initialization", 1: "Selftest", 2: "Work", 3: "Stop"},
+#    ],
 #    15202: [
 #        "MpptState", "Mppt State", 1, "map",
 #        {0: "Stop", 1: "MPPT", 2: "Current limiting"},
 #    ],
-    15203: [
-        "ChargingState", "Charging State", 1, "map",
-        {0: "Stop", 1: "Absorb charge", 2: "Float charge", 3: "Equalization charge"},
-    ],
+#    15203: [
+#        "ChargingState", "Charging State", 1, "map",
+#        {0: "Stop", 1: "Absorb charge", 2: "Float charge", 3: "Equalization charge"},
+#    ],
 #    15205: ["PvVoltage", "Pv. Voltage", 0.1, "V"],
 #    15206: ["chBatteryVoltage", "Ch. Battery Voltage", 0.1, "V"],
-    15207: ["chChargerCurrent", "Ch. Charger Current", 0.1, "A"],
-    15208: ["ChargerPower", "Ch. Charger Power", 1, "W"],
+#    15207: ["chChargerCurrent", "Ch. Charger Current", 0.1, "A"],
+#    15208: ["ChargerPower", "Ch. Charger Power", 1, "W"],
 #    15209: ["RadiatorTemperature", "Ch. Radiator Temperature", 1, "C"],
 #    15210: ["ExternalTemperature", "Ch. External Temperature", 1, "C"],
 #    15211: ["BatteryRelay", "Battery Relay", 1, ""],
@@ -192,7 +192,11 @@ def main():
            else:
               all_stats["BMS_BatteryDischargeCurrent"] = 0
               all_stats["BMS_BatteryChargeCurrent"] = abs(val)
-
+               
+        # абсолютные значения мощностей
+        for key in ["inverterPower", "gridPowerIn", "loadPowerOut"]:
+            if key in all_stats:
+                all_stats[key] = abs(all_stats[key])
 
         # выводим JSON
         print(json.dumps(all_stats, ensure_ascii=False, indent=2))
